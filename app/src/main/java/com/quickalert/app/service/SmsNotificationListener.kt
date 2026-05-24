@@ -1,13 +1,11 @@
 package com.quickalert.app.service
 
-import android.app.Notification
 import android.content.Intent
 import android.os.Bundle
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
 import com.quickalert.app.QuickAlertApp
-import com.quickalert.app.ui.AlertFullScreenActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -62,13 +60,17 @@ class SmsNotificationListener : NotificationListenerService() {
         }
 
         val packageName = sbn.packageName ?: return
+        
+        // 跳过自己发出的通知，避免循环触发
+        if (packageName == this.packageName) return
+        
         val notification = sbn.notification ?: return
         val extras = notification.extras ?: return
 
         // 获取通知内容
-        val title = extras.getCharSequence(Notification.EXTRA_TITLE)?.toString() ?: ""
-        val text = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
-        val bigText = extras.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString() ?: text
+        val title = extras.getCharSequence(android.app.Notification.EXTRA_TITLE)?.toString() ?: ""
+        val text = extras.getCharSequence(android.app.Notification.EXTRA_TEXT)?.toString() ?: ""
+        val bigText = extras.getCharSequence(android.app.Notification.EXTRA_BIG_TEXT)?.toString() ?: text
 
         // 构建完整的通知文本
         val fullText = if (bigText.isNotBlank()) bigText else text
@@ -118,14 +120,10 @@ class SmsNotificationListener : NotificationListenerService() {
         customRingtoneUri: String?,
         vibrate: Boolean
     ) {
-        val intent = Intent(this, AlertFullScreenActivity::class.java).apply {
-            putExtra(AlertFullScreenActivity.EXTRA_SENDER, sender)
-            putExtra(AlertFullScreenActivity.EXTRA_TEXT, text)
-            putExtra(AlertFullScreenActivity.EXTRA_RINGTONE_URI, customRingtoneUri)
-            putExtra(AlertFullScreenActivity.EXTRA_VIBRATE, vibrate)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION)
-        }
-        startActivity(intent)
+        Log.d(TAG, "=== 触发提醒: sender=$sender ===")
+        // 直接启动前台服务来播放报警声+振动+全屏提醒
+        AlarmForegroundService.start(this, sender, text, customRingtoneUri, vibrate)
+        Log.d(TAG, "✅ 前台服务已启动")
     }
 
     override fun onDestroy() {
