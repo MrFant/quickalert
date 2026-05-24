@@ -46,11 +46,16 @@ class SmsNotificationListener : NotificationListenerService() {
     override fun onListenerConnected() {
         super.onListenerConnected()
         Log.d(TAG, "=== 通知监听已连接 ===")
+        // 启动常驻前台服务，防止进程被 ColorOS 冻结
+        KeepAliveService.start(this)
+        Log.d(TAG, "✅ KeepAlive 服务已启动")
     }
 
     override fun onListenerDisconnected() {
         super.onListenerDisconnected()
         Log.w(TAG, "=== 通知监听已断开 ===")
+        // 停止常驻服务
+        KeepAliveService.stop(this)
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
