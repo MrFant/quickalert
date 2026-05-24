@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">快提醒</string>
+    <string name="notification_listener_label">短信强提醒</string>
+    <string name="alert_channel_name">短信提醒</string>
+    <string name="alert_channel_desc">高优先级短信提醒通知</string>
+</resources>
